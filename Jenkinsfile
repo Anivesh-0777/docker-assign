@@ -1,41 +1,31 @@
-pipeline{
-    agent any
-    tools{
-        nodejs "node"
+pipeline {
+    agent {
+        docker {
+            image 'node:6-alpine'
+            args '-p 3000:3000'
+        }
     }
-    environment{
-        dockerImage=""
-        registry="dockerid0777/dockerassign"
-        // registryCredential = "docker"
-    }
-   
-    stages{
-        stage("Checkout"){
-            steps{
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'githubid', url: 'https://github.com/Anivesh-0777/docker-assign.git']]])
-                }
-            }
-                stage('docker image build/push') { 
+     environment {
+            CI = 'true'
+        }
+    stages {
+        stage('Build') {
             steps {
                 sh 'npm install'
-                script {
-                    
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerHub') {
-                        def customImage = docker.build("dockerid0777/dockerassign")
-                        customImage.push()
-                    }
-                }
             }
         }
-            
-//         stage('Build Docker image') {
-//             steps{
-//                 script {
-//                     dockerImage = docker.build registry
-//                 }
-                
-//             }
-            
-//         }
+        stage('Test') {
+                    steps {
+                        sh './jenkins/scripts/test.sh'
+                    }
+                }
+                stage('Deliver') {
+                            steps {
+                                sh './jenkins/scripts/deliver.sh'
+                                input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                                sh './jenkins/scripts/kill.sh'
+                            }
+                        }
+
     }
 }
