@@ -1,5 +1,8 @@
 pipeline{
     agent any
+    tools{
+        nodejs "node"
+    }
     environment{
         dockerImage=""
         registry="dockerid0777/dockerassign"
